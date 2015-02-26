@@ -2,3 +2,4 @@
 # defaults file for mapr-spark
 spark_version: 1.1.0
 spark_home: /opt/mapr/spark/spark-{{spark_version}}
+spark_enabled: False
