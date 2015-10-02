@@ -4,25 +4,35 @@
 # Assumes the MapR repos are already configured.
 
 - name: install mapr-spark for RedHat/CentOS
-  yum: name='{{item}}' state=present
+  sudo_user: root
+  yum: name='{{item}}-{{spark_version}}.{{spark_build}}' state=present
   with_items:
     - mapr-spark-master
+    - mapr-spark-historyserver
   environment: proxy_env
   when: ansible_distribution in ("CentOS", "RedHat", "Amazon")
   notify:
     - re-run configure.sh to enable spark-master
 
 - name: install mapr-spark for Debian/Ubuntu
+  sudo_user: root
   apt: name='{{item}}' state=present
   with_items:
     - mapr-spark-master
+    - mapr-spark-historyserver
   environment: proxy_env
-  when: ansible_distribution == "Debian" or ansible_distribution == "Ubuntu"
+  when: ansible_distribution in ("Debian", "Ubuntu")
   notify:
     - re-run configure.sh to enable spark-master
 
 - name: create slaves file
+  sudo_user: root
   template: src=slaves.j2 dest={{spark_home}}/conf/slaves mode=0644 owner=root group=root
 
 - name: ensure spark log directory exists
+  sudo_user: root
   file: state=directory path=/opt/mapr/spark/spark-{{spark_version}}/logs owner=mapr group=mapr mode=0750
+
+- name: create a volume for Spark
+  sudo_user: '{{mapr_admin_username}}'
+  mapr_volume: name={{spark_volume_name}} path={{spark_volume_path}} state=present username={{mapr_admin_username}} password={{mapr_password_clear|default("mapr")}} mapr_webserver={{mapr_webserver}}
